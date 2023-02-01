@@ -1,6 +1,4 @@
 from pydantic import BaseModel
-from typing import Union
-from db import models
 from db.db import SessionLocal
 
 class User(BaseModel):
@@ -29,11 +27,11 @@ def register_user(phone_number: str, password: str, about_me: str):
         user = models.users(phone_number=phone_number, password=password,
           about_me=about_me,
           pin_chat_ids=[])
-        s.adduser
-        s.commit
+        s.add(user)
+        s.commit()
 
 
 def change_profile(username: str, new_about_me: str):
     with SessionLocal.begin as (s):
-        s.querymodels.users.filter(models.users.phone_number == username).update{'about_me': new_about_me}
-        s.commit
+        s.querymodels.users.filter(models.users.phone_number == username).update({'about_me': new_about_me})
+        s.commit()
