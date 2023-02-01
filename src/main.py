@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from api.routes import register
 from api.websocket_events import register_ws
 import socketio
+
+
 app = FastAPI()
 app.mount('/static', StaticFiles(directory='../static'), name='static')
 sio = socketio.AsyncServer(async_mode='asgi', logger=True, engineio_logger=True)
@@ -13,6 +15,7 @@ app_sio = socketio.ASGIApp(sio, app)
 app.mount('/ws', app_sio)
 register(app)
 register_ws(sio)
+
 
 def main():
     freeze_support()

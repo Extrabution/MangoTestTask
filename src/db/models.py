@@ -1,7 +1,5 @@
 from sqlalchemy import Column, Integer, String, ARRAY
-
-
-from db import Base
+from db.database import Base
 
 
 class users(Base):

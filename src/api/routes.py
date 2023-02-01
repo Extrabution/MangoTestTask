@@ -2,7 +2,8 @@ from __future__ import annotations
 from fastapi import Form
 from services.user_service import *
 from dtos.user_dto import *
-from converters.user_converter import *
+from converters.user_converters import *
+from typing import Union
 
 
 def register(app):
@@ -10,7 +11,7 @@ def register(app):
     async def index():
         return 'Hello!'
 
-    @app.post('/signin', response_model=UserWithTokensDTO)
+    @app.post('/signin', response_model=UserWithTokenDTO)
     async def signin(username: str = Form(), password: str = Form()):
         user = authenticate_user(username, password)
         if not user:
@@ -25,18 +26,20 @@ def register(app):
         return {'access_token': access_token, 'token_type': 'bearer',
                 **convert_user_to_dto(user)}
 
-    @app.post('/signup', response_model=UserWithTokensDTO)
+    @app.post('/signup', response_model=UserWithTokenDTO)
     async def signup(username=Form(), password=Form(), photo=Form(), about_me=Form()):
         user = crud.get_user(username)
         if user:
-            return {'access_token': '', 'token_type': ''}
+            raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                                detail='Phone number is already in use')
         crud.register_user(phone_number=username, password=(get_password_hash(password)), about_me=about_me)
+        user = crud.get_user(username)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={'sub': username},
                                            expires_delta=access_token_expires)
         print(username, password, access_token)
-        await convert_and_save_photo(photo, username)
-        return {**{'access_token':access_token,  'token_type':'bearer'}, **(convert_user_to_dto(user))}
+        convert_and_save_photo(photo, username)
+        return {'access_token': access_token,  'token_type': 'bearer', **(convert_user_to_dto(user))}
 
     @app.put('/profile')
     async def edit_profile(token: str = Form(), new_about_me: str = Form(), new_photo: str = Form()):
@@ -45,8 +48,10 @@ def register(app):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail='Invalid or expired token',
                                 headers={'WWW-Authenticate': 'Bearer'})
-        crud.change_profile(user.phone_number, new_about_me)
-        await convert_and_save_photo(new_photo, user.phone_number)
+        if new_photo != "None":
+            convert_and_save_photo(new_photo, user.phone_number)
+        if new_about_me != "None":
+            crud.change_profile(user.phone_number, new_about_me)
         return {'Status': 'Success'}
 
     @app.get('/user{user_id}', response_model=UserDTO)

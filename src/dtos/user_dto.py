@@ -15,6 +15,6 @@ class UserDTO(BaseModel):
     photos: PhotosDTO
 
 
-class UserWithTokensDTO(UserDTO):
+class UserWithTokenDTO(UserDTO):
     access_token: str
     token_type: str
