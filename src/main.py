@@ -10,7 +10,7 @@ import socketio
 
 app = FastAPI()
 app.mount('/static', StaticFiles(directory='../static'), name='static')
-sio = socketio.AsyncServer(async_mode='asgi', logger=True, engineio_logger=True)
+sio = socketio.AsyncServer(async_mode='asgi')
 app_sio = socketio.ASGIApp(sio, app)
 app.mount('/ws', app_sio)
 register(app)

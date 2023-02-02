@@ -43,6 +43,7 @@ def register(app):
 
     @app.put('/profile')
     async def edit_profile(token: str = Form(), new_about_me: str = Form(), new_photo: str = Form()):
+        # токен через хедер
         user = await get_current_user(token)
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
