@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import uvicorn
 from multiprocessing import cpu_count, freeze_support
 from fastapi.staticfiles import StaticFiles

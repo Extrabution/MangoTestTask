@@ -59,10 +59,10 @@ def get_user_chats(user_id) -> list:
         return chat_list
 
 
-def create_chat(data: list):
+def create_chat(data: list, chat_name: str):
     # data[members, name]
     with SessionLocal.begin() as s:
-        chat = models.chats(members=data[0], name=data[1], last_message_at=datetime.datetime.now())
+        chat = models.chats(members=data, name=chat_name, last_message_at=datetime.datetime.now())
         s.add(chat)
         s.flush()
         s.refresh(chat)
@@ -84,14 +84,15 @@ def pin_chat(user_id, chat_id):
 
 def like(message_id, user_id):
     with SessionLocal.begin() as s:
-        s.execute(f"update messages set liked_by_ids = array_append(liked_by_ids, {user_id}) where message_id={message_id}")
+        s.execute(f"""update messages set liked_by_ids = array_append(liked_by_ids, {user_id}) 
+        where message_id={message_id} and not {user_id}= any(messages.liked_by_ids)""")
         s.commit()
     with SessionLocal.begin() as s:
         liked_by = s.query(models.messages.liked_by_ids, models.messages.chat_id).filter(models.messages.message_id == message_id).first()
         return liked_by[0], liked_by[1]
 
 
-def get_chat_users(chat_id) -> list:
+def get_chat_usernames_of_users(chat_id) -> list:
     with SessionLocal.begin() as s:
         chat_members = s.execute(f"""select users.phone_number 
                                      from users 
@@ -119,15 +120,26 @@ def get_chat_history(chat_id, page_number):
         return chat_history_arr
 
 
-def new_message(data: list) -> dict:
+def new_message(user_id, data: list) -> dict:
     # data[author_id, chat_id, message_type, content]
     with SessionLocal.begin() as s:
-        message = models.messages(author_id=data[0], created_at=datetime.datetime.now(),
-                                  chat_id=data[1], message_type=data[2], content=data[3],
+        message = models.messages(author_id=user_id, created_at=datetime.datetime.now(),
+                                  chat_id=data[0], message_type=data[1], content=data[2],
                                   liked_by_ids=[])
         s.add(message)
         s.flush()
         s.refresh(message)
-        return {"author_id": message.author_id, "created_at": str(message.created_at),
-                "chat_id": message.chat_id, "message_type": message.message_type,
-                "content": message.content, "liked_by_ids": message.liked_by_ids}
+        return {"author_id": message.author_id, "message_id": message.message_id,
+                "created_at": str(message.created_at), "chat_id": message.chat_id,
+                "message_type": message.message_type, "content": message.content,
+                "liked_by_ids": message.liked_by_ids}
+
+
+def get_message_chat_id(message_id) -> int:
+    with SessionLocal.begin() as s:
+        chat_id = s.query(models.messages.chat_id).filter(models.messages.message_id == message_id).first()
+        if chat_id is not None:
+            return chat_id.chat_id
+        else:
+            return -1
+

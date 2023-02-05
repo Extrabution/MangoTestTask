@@ -79,3 +79,9 @@ def convert_and_save_photo(photo: str, username: str):
     with open(f"../static/{username}_400.jpeg", 'wb') as (f):
         f.write(resize_photo(img, 400))
 
+
+def user_allowed_to_chat(user_id, chat_id) -> bool:
+    chat_users = crud.get_chat_usernames_of_users(chat_id)
+    if crud.get_user_by_id(user_id).phone_number in chat_users:
+        return True
+    return False
