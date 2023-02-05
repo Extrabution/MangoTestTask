@@ -28,12 +28,12 @@ def register(app):
 
     @app.post('/signup', response_model=UserWithTokenDTO)
     async def signup(username=Form(), password=Form(), photo=Form(), about_me=Form()):
-        user = crud.get_user(username)
+        user = crud.get_user_by_username(username)
         if user:
             raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                                 detail='Phone number is already in use')
         crud.register_user(phone_number=username, password=(get_password_hash(password)), about_me=about_me)
-        user = crud.get_user(username)
+        user = crud.get_user_by_username(username)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={'sub': username},
                                            expires_delta=access_token_expires)
