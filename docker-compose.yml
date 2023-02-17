@@ -1,0 +1,26 @@
+version: '3.'
+
+services:
+  web:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: "mango"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123qweasd"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data:Z
+      - ./querys.sql:/docker-entrypoint-initdb.d/querys.sql
+    ports:
+      - "5432:5432"

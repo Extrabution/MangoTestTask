@@ -1,10 +1,15 @@
 from __future__ import annotations
-from fastapi import Form
-from services.user_service import *
-from dtos.user_dto import *
-from converters.user_converters import *
-from dtos.input_dto import SignInDTO, SignUpDTO, UpdateProfileDTO
 
+from datetime import timedelta
+
+from services.user_service import authenticate_user, create_access_token, \
+    convert_and_save_photo, get_password_hash, get_current_user
+from dtos.user_dto import UserWithTokenDTO, UserDTO
+from converters.user_converters import convert_user_to_dto
+from dtos.input_dto import SignInDTO, SignUpDTO, UpdateProfileDTO
+from config import ACCESS_TOKEN_EXPIRE_MINUTES
+from fastapi import HTTPException, status
+import db.crud as crud
 
 def register(app):
     @app.get('/')
@@ -15,14 +20,12 @@ def register(app):
     async def signin(data : SignInDTO):
         user = authenticate_user(data.username, data.password)
         if not user:
-            raise HTTPException(status_code=(status.HTTP_401_UNAUTHORIZED),
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail='Incorrect username or password',
                                 headers={'WWW-Authenticate': 'Bearer'})
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        print(access_token_expires)
         access_token = create_access_token(data={'sub': user.phone_number},
                                            expires_delta=access_token_expires)
-        print('!!!!!!')
         return {'access_token': access_token, 'token_type': 'bearer',
                 **convert_user_to_dto(user)}
 
@@ -44,7 +47,6 @@ def register(app):
     @app.put('/profile')
     async def edit_profile(data: UpdateProfileDTO):
         print(data)
-        # токен через хедер
         user = await get_current_user(data.token)
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,

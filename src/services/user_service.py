@@ -4,9 +4,10 @@ from typing import Union
 import jwt
 from fastapi import HTTPException, status
 from db import crud
-import io, base64
+import io
+import base64
 from PIL import Image
-from config import *
+from config import SECRET_KEY, ALGORITHM
 from utils import pwd_context
 
 

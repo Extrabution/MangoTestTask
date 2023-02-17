@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import uvicorn
 from multiprocessing import cpu_count, freeze_support
 from fastapi.staticfiles import StaticFiles
@@ -20,7 +20,7 @@ register_ws(sio)
 def main():
     freeze_support()
     num_workers = int(cpu_count() * 0.75)
-    start_server(num_workers=1, reload=False, host='127.0.0.1')
+    start_server(num_workers=1, reload=False, host='0.0.0.0')
 
 
 def start_server(host='127.0.0.1', port=8000, num_workers=4, loop='asyncio', reload=False):
